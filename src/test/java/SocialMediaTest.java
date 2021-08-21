@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import service.UserServiceImpl;
 import web.exception.FriendRequestException;
+import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class SocialMediaTest{
     UserServiceImpl userServiceImpl;
-    UserDatabaseImpl<User> userDatabase;
 
     NativeDto Ismail;
     NativeDto Kabiru;
@@ -26,18 +26,16 @@ public class SocialMediaTest{
 
     @BeforeEach
     void setUp(){
-        userServiceImpl = (UserServiceImpl) UserServiceImpl.getInstance();
-        Ismail = new NativeDto("Ismail", "Abdullah", "ismail@gmail.com");
-        Kabiru = new NativeDto("Ismail", "Kabiru", "kabir@gmail.com");
-        Mujibat = new NativeDto("Faruq", "Mujibat", "mujibat@gmail.com");
+        userServiceImpl = UserServiceImpl.getInstance();
+        Ismail = new NativeDto("Ismail", "Abdullah", "ismail@gmail.com", "12345");
+        Kabiru = new NativeDto("Ismail", "Kabiru", "kabir@gmail.com", "12345");
+        Mujibat = new NativeDto("Faruq", "Mujibat", "mujibat@gmail.com", "12345");
     }
 
     @AfterEach
     void tearDown(){
         userServiceImpl.getUserDatabase().deleteAll();
     }
-
-
 
     @Test
     void test_thatOnly_OneInstanceOfUserDataBaseIsCreatedTest(){
@@ -64,6 +62,29 @@ public class SocialMediaTest{
     }
 
     @Test
+    void UserIsAutomaticallyLoggedInWhenCreatedTest(){
+        User user = userServiceImpl.registerNative(Ismail);
+        assertThat(user.isLoggedIn()).isEqualTo(true);
+    }
+
+    @Test
+    void UserCanLogoutTest() throws UserAuthException {
+        User user = userServiceImpl.registerNative(Ismail);
+        user.logout();
+        assertThat(user.isLoggedIn()).isEqualTo(false);
+    }
+
+    @Test
+    void UserCanLogInTest() throws UserAuthException {
+        User user = userServiceImpl.registerNative(Kabiru);
+        user.logout();
+
+        user.login(Kabiru.getEmail(), Kabiru.getPassword());
+        assertThat(user.isLoggedIn()).isEqualTo(true);
+    }
+
+
+    @Test
     void can_addMoreThanOne_native(){
         User user1 = userServiceImpl.registerNative(Ismail);
         User user2 = userServiceImpl.registerNative(Kabiru);
@@ -81,8 +102,6 @@ public class SocialMediaTest{
         User user3 = userServiceImpl.registerNative(Mujibat);
 
         List<User> usersWithThatContainSearchName = userServiceImpl.getUsersByName("Ismail");
-
-
         assertAll(
                 () -> assertTrue(usersWithThatContainSearchName.contains(user2)),
                 () -> assertFalse(usersWithThatContainSearchName.contains(user3)),
@@ -92,11 +111,15 @@ public class SocialMediaTest{
     }
 
     @Test
-    void applicationThrowException_whenUserWithSearchNameNotFound(){
+    void applicationThrowException_whenUserWithSearchNameNotFound() {
+        registerUser();
+        assertThrows(UserNotFoundException.class, ()-> userServiceImpl.getUsersByName("peter"));
+    }
+
+    private void registerUser() {
         User user1 = userServiceImpl.registerNative(Ismail);
         User user2 = userServiceImpl.registerNative(Kabiru);
         User user3 = userServiceImpl.registerNative(Mujibat);
-        assertThrows(UserNotFoundException.class, ()-> userServiceImpl.getUsersByName("peter"));
     }
 
     @Test
@@ -124,7 +147,7 @@ public class SocialMediaTest{
         User recipient = userServiceImpl.registerNative(Kabiru);
 
         userServiceImpl.sendFriendRequest(sender.getId(), recipient.getId());
-        recipient.handleRequests(recipient.getFriendRequests().get(0), ACCEPTED);
+        recipient.requestHandler(recipient.getFriendRequests().get(0), ACCEPTED);
 
         recipient.getFriends().forEach(System.out::println);
 
@@ -138,7 +161,7 @@ public class SocialMediaTest{
         User recipient = userServiceImpl.registerNative(Kabiru);
 
         userServiceImpl.sendFriendRequest(sender.getId(), recipient.getId());
-        recipient.handleRequests(recipient.getFriendRequests().get(0), RequestStatus.REJECTED);
+        recipient.requestHandler(recipient.getFriendRequests().get(0), RequestStatus.REJECTED);
 
         assertThat(recipient.getFriends()).doesNotContain(sender.getId());
         assertThat(recipient.getFriends()).isEmpty();

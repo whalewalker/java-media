@@ -6,28 +6,28 @@ import data.model.User;
 import data.repository.Database;
 import data.repository.FriendRequestDispatcher;
 import data.repository.UserDatabaseImpl;
-import lombok.Data;
 import lombok.Getter;
 import web.exception.FriendRequestException;
+import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
 import java.util.List;
-import java.util.Optional;
 
-@Data
+import static java.lang.String.format;
+
 public class UserServiceImpl implements UserService{
-
     @Getter
     private final Database<User> userDatabase;
+    private static UserServiceImpl instance = null;
 
-    private UserServiceImpl(){
-        this.userDatabase = new UserDatabaseImpl<>();
+    public UserServiceImpl() {
+        this.userDatabase = UserDatabaseImpl.getInstance();
     }
-
 
     @Override
     public User registerNative(NativeDto nativeDto) {
         User user = NativeDto.unpack(nativeDto);
+        user.setLoggedIn(true);
         userDatabase.save(user);
         return user;
     }
@@ -35,38 +35,43 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<User> getUsersByName(String name) throws UserNotFoundException {
         List<User> users = userDatabase.findByName(name);
-        if (users.isEmpty()) throw new UserNotFoundException(String.format("No user with %s name not found!", name));
+        if (users == null) throw new UserNotFoundException(format("No User found with %s", name));
         return users;
     }
 
+
+
     @Override
     public void sendFriendRequest(String senderId, String recipientId) throws FriendRequestException {
-        Optional<User> sender = userDatabase.findById(senderId);
-        if (sender.isPresent()){
-            String senderName = sender.get().getName();
-            Request request = new Request(senderName, senderId, recipientId);
-            Optional<User> recipient = userDatabase.findById(recipientId);
-            if (recipient.isPresent()) sendFriendRequest(request, recipient.get());
-            else throw new FriendRequestException("Friend request with this recipient id does not exist!");
-        }else throw new FriendRequestException("Friend request with this sender id does not exist!");
+        User sender = userDatabase.findById(senderId).orElseThrow(()-> new FriendRequestException("Friend request sender does not exist"));
+        String senderName = sender.getName();
+        User recipient = userDatabase.findById(recipientId).orElseThrow(()-> new FriendRequestException("Friend request recipient does not exist"));
+        Request request = new Request(senderName, senderId, recipientId);
+        sendFriendRequest(request, recipient);
     }
 
-    private void sendFriendRequest(Request request, User receiver) {
-        FriendRequestDispatcher friendRequestDispatcher = new FriendRequestDispatcher();
-        friendRequestDispatcher.send(receiver, (Message<Request>) request);
-    }
     @Override
-    public void friendMatcher(Message<Request> requestMessages) {
-        User sender = userDatabase.findById(requestMessages.getSenderId()).get();
+    public void friendMatcher(Message<Request> requestMessages) throws FriendRequestException {
+        User sender = userDatabase.findById(requestMessages.getSenderId()).orElseThrow(()-> new FriendRequestException("Friend request sender does not exist"));
         sender.getFriends().add(requestMessages.getRecipientId());
     }
 
-
-    private static class UserServiceSingletonHelper {
-        private static final UserService instance = new UserServiceImpl();
+    @Override
+    public void sendFriendRequest(Message<Request> requestMessage, User user) {
+        FriendRequestDispatcher friendRequestDispatcher = new FriendRequestDispatcher();
+        friendRequestDispatcher.send(user, requestMessage);
     }
 
-    public static UserService getInstance(){
-        return UserServiceSingletonHelper.instance;
+    public static UserServiceImpl getInstance(){
+        if (instance == null){
+            instance = new UserServiceImpl();
+        }
+        return instance;
+    }
+
+    public boolean isValidUser(String email, String password) throws UserAuthException {
+       User user = userDatabase.findByEmail(email).orElseThrow(() -> new UserAuthException("Invalid details"));
+       if (user.getPassword().equals(password)) return true;
+       else throw  new UserAuthException("Invalid details");
     }
 }

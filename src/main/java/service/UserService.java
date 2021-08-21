@@ -12,5 +12,6 @@ public interface UserService {
     User registerNative(NativeDto nativeDto);
     List<User> getUsersByName(String name) throws UserNotFoundException;
     void sendFriendRequest(String senderId, String recipientId) throws FriendRequestException;
-    void friendMatcher(Message<Request> requestMessages);
+    void friendMatcher(Message<Request> requestMessages) throws FriendRequestException;
+    void sendFriendRequest(Message<Request> requestMessage, User user);
 }

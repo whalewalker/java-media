@@ -63,7 +63,7 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     public List<T> findByName(String name) {
         List<T> listOfUsers = new ArrayList<>();
         for (T t : userStore){
-            if (t.getName().contains(name)) listOfUsers.add(t);
+            if (t.getName().equals(name)) listOfUsers.add(t);
         }
         return listOfUsers;
     }
@@ -71,6 +71,16 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     @Override
     public void deleteAll() {
         userStore.clear();
+    }
+
+    @Override
+    public Optional<T> findByEmail(String email) {
+        for (T t: userStore) {
+            if (t.getEmail().equals(email)) {
+                return Optional.of(t);
+            }
+        }
+        return Optional.empty();
     }
 
 

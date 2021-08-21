@@ -14,4 +14,5 @@ public interface Database <T> {
     Optional<T> findByUsername(String username);
     List<T> findByName(String name);
     void deleteAll();
+    Optional<T> findByEmail(String email);
 }

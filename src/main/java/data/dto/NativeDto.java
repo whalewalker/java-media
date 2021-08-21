@@ -12,10 +12,11 @@ public class NativeDto {
     private String firstName;
     private String lastName;
     private String email;
-
+    private String password;
 
 
     public static Native unpack(NativeDto nativeDto){
-        return  new Native(nativeDto.getFirstName(), nativeDto.getLastName(), nativeDto.getEmail());
+        return  new Native(nativeDto.getFirstName(), nativeDto.getLastName(), nativeDto.getEmail(), nativeDto.getPassword());
     }
+
 }
