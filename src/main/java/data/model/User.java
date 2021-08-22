@@ -26,8 +26,8 @@ public abstract class User implements Storable {
     private final List<Message<Request>> friendRequests;
     private final Set<String> friends;
     private String profile;
-    private Map<String, List<Message<ChatMessage>>> inbox = new HashMap<>();
-    private Map<String, List<Message<ChatMessage>>> outbox = new HashMap<>();
+    private Map<String, List<ChatMessage>> inbox = new HashMap<>();
+    private Map<String, List<ChatMessage>> outbox = new HashMap<>();
     private List<String> chartRooms = new ArrayList<>();
 
     public User(String firstName, String lastName, String email, String password) {
@@ -79,6 +79,4 @@ public abstract class User implements Storable {
     public void updatePendingFriendRequest(Message<Request> message){
         friendRequests.add(message);
     }
-
-    public abstract Map<String, User> getInbox();
 }

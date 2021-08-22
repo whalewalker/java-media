@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import service.UserServiceImpl;
 import web.exception.FriendRequestException;
+import web.exception.UnSupportedActionException;
 import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
@@ -195,7 +196,7 @@ public class SocialMediaTest{
     }
 
     @Test
-    void userCanSendMessageTest() throws UserAuthException, FriendRequestException {
+    void userCanSendMessageTest() throws UserAuthException, FriendRequestException, UserNotFoundException, UnSupportedActionException {
         User sender = userServiceImpl.registerNative(Ismail);
         User recipient = userServiceImpl.registerNative(Kabiru);
 
@@ -204,6 +205,6 @@ public class SocialMediaTest{
         userServiceImpl.sendChatMessage(sender.getId(), recipient.getId(), "Hello buddy");
         assertThat(recipient.getInbox()).hasSize(1);
         assertThat(recipient.getInbox().containsKey(sender.getId())).isTrue();
-        assertThat(recipient.getInbox().get(sender.getId())).contain(sender.getOutbox().get(recipient.getId().get(0))).isTrue();
+        assertThat(recipient.getInbox().get(sender.getId())).isEqualTo(sender.getOutbox().get(recipient.getId()));
     }
 }

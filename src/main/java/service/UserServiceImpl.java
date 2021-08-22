@@ -8,6 +8,7 @@ import data.repository.FriendRequestDispatcher;
 import data.repository.UserDatabaseImpl;
 import lombok.Getter;
 import web.exception.FriendRequestException;
+import web.exception.UnSupportedActionException;
 import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
@@ -19,9 +20,11 @@ public class UserServiceImpl implements UserService{
     @Getter
     private final Database<User> userDatabase;
     private static UserServiceImpl instance = null;
+    private final MessageService messageService;
 
     public UserServiceImpl() {
         this.userDatabase = UserDatabaseImpl.getInstance();
+        messageService = new MessageServiceImpl();
     }
 
     @Override
@@ -85,7 +88,11 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void sendChatMessage(String senderId, String recipientId, String message) {
+    public void sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException {
+        User sender = userDatabase.findById(senderId).orElseThrow(() -> new UserNotFoundException("sender with id not found"));
+        User recipient = userDatabase.findById(recipientId).orElseThrow(() -> new UserNotFoundException("recipient with id not found"));
 
+        if (!recipient.getFriends().contains(senderId)) throw new UnSupportedActionException("Cannot send message to recipient who is not a friend");
+        messageService.dispatchMessage(sender, recipient, message);
     }
 }

@@ -27,13 +27,11 @@ public class ChatMessage {
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd:HH/mm");
         return format("""
-                *************************
-                *Sender --> %s          *
-                *---------------------- *
-                * |Message --> %s     | *
-                * |Time sent --> %s  | *
-                *-----------------------*
-                *************************
+                Sender --> %s
+                ----------------------
+                Message --> %s     
+                Time sent --> %s  
+                -----------------------
                 """, this.getSenderName(), this.getChatMessage(), formatter.format(this.getTimeSent()));
 
     }

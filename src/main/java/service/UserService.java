@@ -4,6 +4,7 @@ import data.dto.NativeDto;
 import data.model.Request;
 import data.model.User;
 import web.exception.FriendRequestException;
+import web.exception.UnSupportedActionException;
 import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
@@ -17,5 +18,5 @@ public interface UserService {
     void sendFriendRequest(Message<Request> requestMessage, User user);
     void login(String email, String password) throws UserAuthException;
     void logout(User user) throws UserAuthException;
-    void sendChatMessage(String senderId, String recipientId, String message);
+    void sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException;
 }
