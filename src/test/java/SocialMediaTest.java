@@ -15,6 +15,7 @@ import java.util.List;
 
 import static data.model.RequestStatus.ACCEPTED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SocialMediaTest{
@@ -35,6 +36,7 @@ public class SocialMediaTest{
     @AfterEach
     void tearDown(){
         userServiceImpl.getUserDatabase().deleteAll();
+        userServiceImpl = null;
     }
 
     @Test
@@ -56,13 +58,18 @@ public class SocialMediaTest{
 
     @Test
     void native_canRegister(){
-        User user = userServiceImpl.registerNative(Ismail);
+        User user = null;
+        try {
+            user = userServiceImpl.registerNative(Ismail);
+        } catch (UserAuthException e) {
+            e.printStackTrace();
+        }
         assertTrue(userServiceImpl.getUserDatabase().contain(user));
         assertEquals(userServiceImpl.getUserDatabase().size(), 1);
     }
 
     @Test
-    void UserIsAutomaticallyLoggedInWhenCreatedTest(){
+    void UserIsAutomaticallyLoggedInWhenCreatedTest() throws UserAuthException {
         User user = userServiceImpl.registerNative(Ismail);
         assertThat(user.isLoggedIn()).isEqualTo(true);
     }
@@ -70,22 +77,35 @@ public class SocialMediaTest{
     @Test
     void UserCanLogoutTest() throws UserAuthException {
         User user = userServiceImpl.registerNative(Ismail);
-        user.logout();
+
+        userServiceImpl.logout(user);
         assertThat(user.isLoggedIn()).isEqualTo(false);
     }
 
     @Test
     void UserCanLogInTest() throws UserAuthException {
         User user = userServiceImpl.registerNative(Kabiru);
-        user.logout();
+        userServiceImpl.logout(user);
 
-        user.login(Kabiru.getEmail(), Kabiru.getPassword());
+        userServiceImpl.login(Kabiru.getEmail(), Kabiru.getPassword());
         assertThat(user.isLoggedIn()).isEqualTo(true);
     }
 
+    @Test
+    void throwUserAuthExceptionWhenUserProvideInvalidDetailForLoginTest() throws UserAuthException {
+        User user = userServiceImpl.registerNative(Kabiru);
+        assertThatThrownBy(() -> userServiceImpl.login(user.getEmail(), "3456")).isInstanceOf(UserAuthException.class);
+    }
 
     @Test
-    void can_addMoreThanOne_native(){
+    void testThatUserCannotLogoutWhenAlreadyLoggedOut() throws UserAuthException {
+        User user = userServiceImpl.registerNative(Kabiru);
+        userServiceImpl.logout(user);
+        assertThatThrownBy(()-> userServiceImpl.logout(user)).isInstanceOf(UserAuthException.class);
+    }
+
+    @Test
+    void can_addMoreThanOne_native() throws UserAuthException {
         User user1 = userServiceImpl.registerNative(Ismail);
         User user2 = userServiceImpl.registerNative(Kabiru);
 
@@ -96,7 +116,7 @@ public class SocialMediaTest{
     }
 
     @Test
-    void native_canFindOtherUserOnPlatform() throws UserNotFoundException {
+    void native_canFindOtherUserOnPlatform() throws UserNotFoundException, UserAuthException {
         User user1 = userServiceImpl.registerNative(Ismail);
         User user2 = userServiceImpl.registerNative(Kabiru);
         User user3 = userServiceImpl.registerNative(Mujibat);
@@ -111,19 +131,26 @@ public class SocialMediaTest{
     }
 
     @Test
-    void applicationThrowException_whenUserWithSearchNameNotFound() {
+    void applicationThrowException_whenUserWithSearchNameNotFound() throws UserAuthException {
         registerUser();
-        assertThrows(UserNotFoundException.class, ()-> userServiceImpl.getUsersByName("peter"));
+        assertThrows(UserNotFoundException.class, ()-> userServiceImpl.getUsersByName("whalewalker"));
     }
 
-    private void registerUser() {
+    private void registerUser() throws UserAuthException {
         User user1 = userServiceImpl.registerNative(Ismail);
         User user2 = userServiceImpl.registerNative(Kabiru);
         User user3 = userServiceImpl.registerNative(Mujibat);
     }
 
     @Test
-    void nativeCan_sendFriendRequests_toAnotherNative() throws FriendRequestException {
+    void userHaveUniqueUsername() throws UserAuthException {
+        NativeDto nativeDto = new NativeDto("Native", "cool", "ismail@gmail.com", "2345");
+        userServiceImpl.registerNative(Ismail);
+        assertThrows(UserAuthException.class, ()-> userServiceImpl.registerNative(nativeDto));
+    }
+
+    @Test
+    void nativeCan_sendFriendRequests_toAnotherNative() throws FriendRequestException, UserAuthException {
         User sender = userServiceImpl.registerNative(Ismail);
         User recipient = userServiceImpl.registerNative(Kabiru);
 
@@ -142,7 +169,7 @@ public class SocialMediaTest{
     }
 
     @Test
-    void user_canAcceptFriendRequest_andAddFriendFriendToFriendList() throws FriendRequestException {
+    void user_canAcceptFriendRequest_andAddFriendToFriendList() throws FriendRequestException, UserAuthException {
         User sender = userServiceImpl.registerNative(Ismail);
         User recipient = userServiceImpl.registerNative(Kabiru);
 
@@ -156,7 +183,7 @@ public class SocialMediaTest{
     }
 
     @Test
-    void user_canRejectFriendRequest() throws FriendRequestException {
+    void user_canRejectFriendRequest() throws FriendRequestException, UserAuthException {
         User sender = userServiceImpl.registerNative(Ismail);
         User recipient = userServiceImpl.registerNative(Kabiru);
 
@@ -165,5 +192,18 @@ public class SocialMediaTest{
 
         assertThat(recipient.getFriends()).doesNotContain(sender.getId());
         assertThat(recipient.getFriends()).isEmpty();
+    }
+
+    @Test
+    void userCanSendMessageTest() throws UserAuthException, FriendRequestException {
+        User sender = userServiceImpl.registerNative(Ismail);
+        User recipient = userServiceImpl.registerNative(Kabiru);
+
+        userServiceImpl.sendFriendRequest(sender.getId(), recipient.getId());
+        recipient.requestHandler(recipient.getFriendRequests().get(0), ACCEPTED);
+        userServiceImpl.sendChatMessage(sender.getId(), recipient.getId(), "Hello buddy");
+        assertThat(recipient.getInbox()).hasSize(1);
+        assertThat(recipient.getInbox().containsKey(sender.getId())).isTrue();
+        assertThat(recipient.getInbox().get(sender.getId())).contain(sender.getOutbox().get(recipient.getId().get(0))).isTrue();
     }
 }

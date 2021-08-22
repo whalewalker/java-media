@@ -8,11 +8,11 @@ import service.UserServiceImpl;
 import web.exception.FriendRequestException;
 import web.exception.UserAuthException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static data.model.RequestStatus.ACCEPTED;
 import static data.model.RequestStatus.REJECTED;
+import static java.lang.String.format;
 
 @Data
 
@@ -23,13 +23,12 @@ public abstract class User implements Storable {
     private String email;
     private boolean isLoggedIn;
     private String id;
-
-    private final List<Message<Request>> friendRequests = new ArrayList<>();
-    private final  List<String> friends = new ArrayList<>();
-
-    public String viewMessage(int messageIndex){
-        return friendRequests.get(messageIndex).toString();
-    }
+    private final List<Message<Request>> friendRequests;
+    private final Set<String> friends;
+    private String profile;
+    private Map<String, List<Message<ChatMessage>>> inbox = new HashMap<>();
+    private Map<String, List<Message<ChatMessage>>> outbox = new HashMap<>();
+    private List<String> chartRooms = new ArrayList<>();
 
     public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
@@ -37,6 +36,17 @@ public abstract class User implements Storable {
         this.email = email;
         this.password = password;
         isLoggedIn = true;
+        friendRequests = new ArrayList<>();
+        friends = new HashSet<>();
+        profile = format( """
+               First name: %s
+               Last name: %s
+               Email: %s
+                """, firstName, lastName, email);
+    }
+
+    public String viewMessage(int messageIndex){
+        return friendRequests.get(messageIndex).toString();
     }
 
     public void requestHandler(Message<Request> messageRequest, RequestStatus requestStatus) throws FriendRequestException {
@@ -70,8 +80,5 @@ public abstract class User implements Storable {
         friendRequests.add(message);
     }
 
-    public abstract void logout() throws UserAuthException;
-
-    public abstract void login(String email, String password) throws UserAuthException;
-
+    public abstract Map<String, User> getInbox();
 }

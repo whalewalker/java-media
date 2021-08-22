@@ -24,17 +24,5 @@ public class Native extends User{
         return getFirstName() + " " + getLastName();
     }
 
-    @Override
-    public void logout() throws UserAuthException {
-        if (!isLoggedIn()) throw new UserAuthException("You're already logged out");
-        this.setLoggedIn(false);
-    }
 
-    @Override
-    public void login(String email, String password) throws UserAuthException {
-        if (isLoggedIn()) throw new UserAuthException("You're already logged in");
-        if (userService.isValidUser(email, password)){
-            this.setLoggedIn(true);
-        }
-    }
 }

@@ -1,14 +1,13 @@
 package data.repository;
 
 import data.model.User;
+import web.exception.UserAuthException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     private static UserDatabaseImpl<User> single_instance = null;
-
+    private final Set<String> emails = new HashSet<>();
     List<T> userStore = new ArrayList<>();
 
     public static UserDatabaseImpl<User> getInstance() {
@@ -39,6 +38,11 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     }
 
     @Override
+    public void checkEmail(String email) throws UserAuthException {
+        if (emails.contains(email)) throw new UserAuthException("Email already exist");
+    }
+
+    @Override
     public int size() {
         return userStore.size();
     }
@@ -60,10 +64,12 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     }
 
     @Override
-    public List<T> findByName(String name) {
+    public List<T> findAllByName(String name) {
         List<T> listOfUsers = new ArrayList<>();
         for (T t : userStore){
-            if (t.getName().equals(name)) listOfUsers.add(t);
+            if (t.getName().contains(name)){
+                listOfUsers.add(t);
+            }
         }
         return listOfUsers;
     }
@@ -81,6 +87,11 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public void addEmail(String email) {
+        emails.add(email);
     }
 
 

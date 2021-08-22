@@ -25,7 +25,9 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User registerNative(NativeDto nativeDto) {
+    public User registerNative(NativeDto nativeDto) throws UserAuthException {
+//        userDatabase.checkEmail(nativeDto.getEmail());
+//        userDatabase.addEmail(nativeDto.getEmail());
         User user = NativeDto.unpack(nativeDto);
         user.setLoggedIn(true);
         userDatabase.save(user);
@@ -34,8 +36,8 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public List<User> getUsersByName(String name) throws UserNotFoundException {
-        List<User> users = userDatabase.findByName(name);
-        if (users == null) throw new UserNotFoundException(format("No User found with %s", name));
+        List<User> users = userDatabase.findAllByName(name);
+        if (users.isEmpty()) throw new UserNotFoundException(format("No User found with %s", name));
         return users;
     }
 
@@ -69,9 +71,21 @@ public class UserServiceImpl implements UserService{
         return instance;
     }
 
-    public boolean isValidUser(String email, String password) throws UserAuthException {
-       User user = userDatabase.findByEmail(email).orElseThrow(() -> new UserAuthException("Invalid details"));
-       if (user.getPassword().equals(password)) return true;
-       else throw  new UserAuthException("Invalid details");
+    @Override
+    public void login(String email, String password) throws UserAuthException {
+        User user = userDatabase.findByEmail(email).orElseThrow(() -> new UserAuthException("Invalid user details"));
+        if (user.getPassword().equals(password)) user.setLoggedIn(true);
+        else throw new UserAuthException("Invalid user details");
+    }
+
+    @Override
+    public void logout(User user) throws UserAuthException {
+        if (!user.isLoggedIn()) throw new UserAuthException("User already logout");
+        user.setLoggedIn(false);
+    }
+
+    @Override
+    public void sendChatMessage(String senderId, String recipientId, String message) {
+
     }
 }
