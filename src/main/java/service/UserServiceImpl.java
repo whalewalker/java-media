@@ -88,11 +88,20 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException {
+    public String sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException {
         User sender = userDatabase.findById(senderId).orElseThrow(() -> new UserNotFoundException("sender with id not found"));
         User recipient = userDatabase.findById(recipientId).orElseThrow(() -> new UserNotFoundException("recipient with id not found"));
 
         if (!recipient.getFriends().contains(senderId)) throw new UnSupportedActionException("Cannot send message to recipient who is not a friend");
-        messageService.dispatchMessage(sender, recipient, message);
+        return messageService.dispatchMessage(sender, recipient, message);
+    }
+
+    @Override
+    public String sendChatMessage(String senderId, String recipientId, String message, String messageId) throws UserNotFoundException, UnSupportedActionException {
+        User sender = userDatabase.findById(senderId).orElseThrow(() -> new UserNotFoundException("sender with id not found"));
+        User recipient = userDatabase.findById(recipientId).orElseThrow(() -> new UserNotFoundException("recipient with id not found"));
+
+        if (!recipient.getFriends().contains(senderId)) throw new UnSupportedActionException("Cannot send message to recipient who is not a friend");
+        return messageService.dispatchMessage(sender, recipient, message, messageId);
     }
 }

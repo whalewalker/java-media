@@ -18,5 +18,6 @@ public interface UserService {
     void sendFriendRequest(Message<Request> requestMessage, User user);
     void login(String email, String password) throws UserAuthException;
     void logout(User user) throws UserAuthException;
-    void sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException;
+    String sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException;
+    String sendChatMessage(String senderId, String recipientId, String message, String messageId) throws UserNotFoundException, UnSupportedActionException;
 }

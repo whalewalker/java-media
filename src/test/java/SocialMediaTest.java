@@ -2,6 +2,7 @@ import data.dto.NativeDto;
 import data.model.RequestStatus;
 import data.model.User;
 import data.repository.UserDatabaseImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import static data.model.RequestStatus.ACCEPTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
+
 
 public class SocialMediaTest{
     UserServiceImpl userServiceImpl;
@@ -206,5 +208,50 @@ public class SocialMediaTest{
         assertThat(recipient.getInbox()).hasSize(1);
         assertThat(recipient.getInbox().containsKey(sender.getId())).isTrue();
         assertThat(recipient.getInbox().get(sender.getId())).isEqualTo(sender.getOutbox().get(recipient.getId()));
+    }
+
+    @Test
+    void userCanOnlySendMessageToOnlyUsersInTheirFriendList() throws UserAuthException, FriendRequestException {
+        User sender = userServiceImpl.registerNative(Ismail);
+        User recipient = userServiceImpl.registerNative(Kabiru);
+
+        userServiceImpl.sendFriendRequest(sender.getId(), recipient.getId());
+        assertThrows(UnSupportedActionException.class, () -> userServiceImpl.sendChatMessage(sender.getId(), recipient.getId(), "How far"));
+    }
+
+    @Test
+    void userCanReplyToASpecificSentMessage() throws UserAuthException, FriendRequestException, UserNotFoundException, UnSupportedActionException {
+        User sender = userServiceImpl.registerNative(Ismail);
+        User recipient = userServiceImpl.registerNative(Kabiru);
+
+        userServiceImpl.sendFriendRequest(sender.getId(), recipient.getId());
+        recipient.requestHandler(recipient.getFriendRequests().get(0), ACCEPTED);
+       String senderMessageId =  userServiceImpl.sendChatMessage(sender.getId(), recipient.getId(), "Hello buddy");
+       String recipientMessageId =  userServiceImpl.sendChatMessage(recipient.getId(), sender.getId(), "Hi dear, i trust you're ok", senderMessageId);
+
+        System.out.println(sender.getInbox());
+        System.out.println(recipient.getOutbox());
+
+       assertThat(recipient.getInbox().containsKey(sender.getId())).isTrue();
+
+       assertThat(recipient.getInbox()).hasSize(1);
+       assertThat(recipient.getOutbox()).hasSize(1);
+
+        assertThat(sender.getInbox()).hasSize(1);
+        assertThat(sender.getOutbox()).hasSize(1);
+
+       assertThat(recipient.getInbox().get(sender.getId()).get(0)).isEqualTo(sender.getOutbox().get(recipient.getId()).get(0));
+       assertThat(sender.getOutbox().get(recipient.getId()).get(0)).isEqualTo(recipient.getInbox().get(sender.getId()).get(0));
+
+
+        recipient.getOutbox().get(sender.getId()).forEach(message -> {
+            assertThat(message.containsKey(recipientMessageId)).isTrue();
+            assertThat(message.get(recipientMessageId).getLinkedMessages()).contains(senderMessageId);
+        });
+
+        sender.getInbox().get(recipient.getId()).forEach(message -> {
+            assertThat(message.containsKey(recipientMessageId)).isTrue();
+            assertThat(message.get(recipientMessageId).getLinkedMessages()).contains(senderMessageId);
+        });
     }
 }

@@ -26,8 +26,8 @@ public abstract class User implements Storable {
     private final List<Message<Request>> friendRequests;
     private final Set<String> friends;
     private String profile;
-    private Map<String, List<ChatMessage>> inbox = new HashMap<>();
-    private Map<String, List<ChatMessage>> outbox = new HashMap<>();
+    private Map<String, List<Map<String, ChatMessage>>> inbox = new HashMap<>();
+    private Map<String, List<Map<String, ChatMessage>>> outbox = new HashMap<>();
     private List<String> chartRooms = new ArrayList<>();
 
     public User(String firstName, String lastName, String email, String password) {
