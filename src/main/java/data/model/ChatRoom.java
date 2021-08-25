@@ -1,5 +1,6 @@
 package data.model;
 
+import data.repository.ChatRoomStorable;
 import lombok.Data;
 import service.Message;
 import web.exception.ChatRoomException;
@@ -10,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Data
-public class ChatRoom implements Observable{
+public class ChatRoom implements Observable, ChatRoomStorable {
     private final Set<String> members;
     private final String groupId;
     private final Set<String> admins;

@@ -20,4 +20,5 @@ public interface UserService {
     void logout(User user) throws UserAuthException;
     String sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException;
     String sendChatMessage(String senderId, String recipientId, String message, String messageId) throws UserNotFoundException, UnSupportedActionException;
+    void sendChatRoomRequest(String... members);
 }

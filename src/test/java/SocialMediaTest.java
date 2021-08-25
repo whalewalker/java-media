@@ -1,8 +1,8 @@
 import data.dto.NativeDto;
+import data.model.ChatRoom;
 import data.model.RequestStatus;
 import data.model.User;
 import data.repository.UserDatabaseImpl;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -253,5 +253,40 @@ public class SocialMediaTest{
             assertThat(message.containsKey(recipientMessageId)).isTrue();
             assertThat(message.get(recipientMessageId).getLinkedMessages()).contains(senderMessageId);
         });
+    }
+
+    @Test
+    void canCreateChatRoomWithOneAdminAndOneMember() throws UserAuthException {
+
+        User admin = userServiceImpl.registerNative(Ismail);
+        User whale = userServiceImpl.registerNative(Kabiru);
+
+        ChatRoom chatRoom = new ChatRoom(admin.getId(), "pentax", whale.getId());
+        assertThat(chatRoom.getAdmins()).hasSize(1);
+        assertThat(chatRoom.getGroupId()).isNotNull();
+        assertThat(chatRoom.getGroupName()).isEqualTo("pentax");
+        assertThat(chatRoom.getMembers()).hasSize(1);
+    }
+
+    @Test
+    void canCreateChatRoomWithOneAdminAndTwoMember() throws UserAuthException {
+        User admin = userServiceImpl.registerNative(Ismail);
+        User whale = userServiceImpl.registerNative(Kabiru);
+        User mujibat = userServiceImpl.registerNative(Mujibat);
+
+        ChatRoom chatRoom = new ChatRoom(admin.getId(), "pentax", whale.getId(), mujibat.getId());
+        assertThat(chatRoom.getAdmins()).hasSize(1);
+        assertThat(chatRoom.getGroupId()).isNotNull();
+        assertThat(chatRoom.getGroupName()).isEqualTo("pentax");
+        assertThat(chatRoom.getMembers()).hasSize(2);
+    }
+
+    @Test
+    void canSendChatRoomRequestToMembers() throws UserAuthException, FriendRequestException {
+        User admin = userServiceImpl.registerNative(Ismail);
+        User whale = userServiceImpl.registerNative(Kabiru);
+        User mujibat = userServiceImpl.registerNative(Mujibat);
+
+        userServiceImpl.sendFriendRequest(whale.getId(), mujibat.getId());
     }
 }

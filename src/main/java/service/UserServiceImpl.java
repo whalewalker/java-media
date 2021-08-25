@@ -12,6 +12,7 @@ import web.exception.UnSupportedActionException;
 import web.exception.UserAuthException;
 import web.exception.UserNotFoundException;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -56,6 +57,11 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public void sendChatRoomRequest(String groupId, String... memberIds) {
+
+    }
+
+    @Override
     public void friendMatcher(Message<Request> requestMessages) throws FriendRequestException {
         User sender = userDatabase.findById(requestMessages.getSenderId()).orElseThrow(()-> new FriendRequestException("Friend request sender does not exist"));
         sender.getFriends().add(requestMessages.getRecipientId());
@@ -73,6 +79,8 @@ public class UserServiceImpl implements UserService{
         }
         return instance;
     }
+
+
 
     @Override
     public void login(String email, String password) throws UserAuthException {
@@ -104,4 +112,5 @@ public class UserServiceImpl implements UserService{
         if (!recipient.getFriends().contains(senderId)) throw new UnSupportedActionException("Cannot send message to recipient who is not a friend");
         return messageService.dispatchMessage(sender, recipient, message, messageId);
     }
+
 }
