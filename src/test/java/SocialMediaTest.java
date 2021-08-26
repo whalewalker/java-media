@@ -6,11 +6,10 @@ import data.repository.UserDatabaseImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import service.ChatRoomService;
+import service.ChatRoomServiceImpl;
 import service.UserServiceImpl;
-import web.exception.FriendRequestException;
-import web.exception.UnSupportedActionException;
-import web.exception.UserAuthException;
-import web.exception.UserNotFoundException;
+import web.exception.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class SocialMediaTest{
     UserServiceImpl userServiceImpl;
+    ChatRoomService chatService;
 
     NativeDto Ismail;
     NativeDto Kabiru;
@@ -31,6 +31,7 @@ public class SocialMediaTest{
     @BeforeEach
     void setUp(){
         userServiceImpl = UserServiceImpl.getInstance();
+        chatService = ChatRoomServiceImpl.getInstance();
         Ismail = new NativeDto("Ismail", "Abdullah", "ismail@gmail.com", "12345");
         Kabiru = new NativeDto("Ismail", "Kabiru", "kabir@gmail.com", "12345");
         Mujibat = new NativeDto("Faruq", "Mujibat", "mujibat@gmail.com", "12345");
@@ -269,12 +270,15 @@ public class SocialMediaTest{
     }
 
     @Test
-    void canCreateChatRoomWithOneAdminAndTwoMember() throws UserAuthException {
+    void canCreateChatRoomWithOneAdminAndTwoMember() throws UserAuthException, ChatRoomException {
         User admin = userServiceImpl.registerNative(Ismail);
         User whale = userServiceImpl.registerNative(Kabiru);
         User mujibat = userServiceImpl.registerNative(Mujibat);
 
         ChatRoom chatRoom = new ChatRoom(admin.getId(), "pentax", whale.getId(), mujibat.getId());
+
+        chatService.registerChatRoom(chatRoom);
+
         assertThat(chatRoom.getAdmins()).hasSize(1);
         assertThat(chatRoom.getGroupId()).isNotNull();
         assertThat(chatRoom.getGroupName()).isEqualTo("pentax");
@@ -282,11 +286,27 @@ public class SocialMediaTest{
     }
 
     @Test
-    void canSendChatRoomRequestToMembers() throws UserAuthException, FriendRequestException {
+    void canSendChatRoomRequestToMembers() throws UserAuthException, ChatRoomException {
         User admin = userServiceImpl.registerNative(Ismail);
         User whale = userServiceImpl.registerNative(Kabiru);
         User mujibat = userServiceImpl.registerNative(Mujibat);
 
-        userServiceImpl.sendFriendRequest(whale.getId(), mujibat.getId());
+
+        ChatRoom chatRoom = new ChatRoom(admin.getId(), "pentax", whale.getId());
+
+        chatService.registerChatRoom(chatRoom);
+
+        chatService.sendRequests(chatRoom.getGroupId(), whale.getId(), mujibat.getId());
+
+        int year = LocalDateTime.now().getYear();
+        int month = LocalDateTime.now().getMonthValue();
+        int day = LocalDateTime.now().getDayOfMonth();
+        int hour = LocalDateTime.now().getHour();
+        int minute = LocalDateTime.now().getMinute();
+
+        String requestMessage = String.format("You have received a friend request from pentax at %d-%d-%d:%02d:%02d", year, month, day, hour, minute);
+        assertThat(mujibat.viewMessage(0)).isEqualTo(requestMessage);
+        assertThat(whale.viewMessage(0)).isEqualTo(requestMessage);
     }
+
 }

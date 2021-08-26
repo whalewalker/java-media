@@ -11,12 +11,8 @@ public interface Database <T> {
     boolean contain(T t);
     void delete(T t);
     List<T> findAll();
-    void checkEmail(String email) throws UserAuthException;
     int size();
     Optional<T> findById(String id);
-    Optional<T> findByUsername(String username);
     List<T> findAllByName(String name);
     void deleteAll();
-    Optional<T> findByEmail(String email);
-    void addEmail(String email);
 }

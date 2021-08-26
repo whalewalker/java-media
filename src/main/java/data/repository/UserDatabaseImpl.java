@@ -7,6 +7,7 @@ import java.util.*;
 
 public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     private static UserDatabaseImpl<User> single_instance = null;
+
     private final Set<String> emails = new HashSet<>();
     List<T> userStore = new ArrayList<>();
 
@@ -37,7 +38,6 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
         return userStore;
     }
 
-    @Override
     public void checkEmail(String email) throws UserAuthException {
         if (emails.contains(email)) throw new UserAuthException("Email already exist");
     }
@@ -55,7 +55,6 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
         return Optional.empty();
     }
 
-    @Override
     public Optional<T> findByUsername(String username) {
         for (T t : userStore) {
             if (t.getName().contains(username)) return Optional.of(t);
@@ -78,8 +77,7 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
     public void deleteAll() {
         userStore.clear();
     }
-
-    @Override
+//
     public Optional<T> findByEmail(String email) {
         for (T t: userStore) {
             if (t.getEmail().equals(email)) {
@@ -89,7 +87,6 @@ public class UserDatabaseImpl<T extends Storable> implements Database<T>{
         return Optional.empty();
     }
 
-    @Override
     public void addEmail(String email) {
         emails.add(email);
     }

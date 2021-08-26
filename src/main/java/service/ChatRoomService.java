@@ -1,0 +1,23 @@
+package service;
+
+import data.dto.NativeDto;
+import data.model.ChatRoom;
+import data.model.Request;
+import data.model.User;
+import web.exception.*;
+
+import java.util.List;
+
+public interface ChatRoomService {
+    void sendRequests(String groupId, String... members) throws ChatRoomException;
+    void registerChatRoom(ChatRoom chatRoom) throws ChatRoomException;
+
+//    List<User> getUsersByName(String name) throws UserNotFoundException;
+//    void sendFriendRequest(String senderId, String recipientId) throws FriendRequestException;
+//    void friendMatcher(Message<Request> requestMessages) throws FriendRequestException;
+//    void sendFriendRequest(Message<Request> requestMessage, User user);
+//    void login(String email, String password) throws UserAuthException;
+//    void logout(User user) throws UserAuthException;
+//    String sendChatMessage(String senderId, String recipientId, String message) throws UserNotFoundException, UnSupportedActionException;
+//    String sendChatMessage(String senderId, String recipientId, String message, String messageId) throws UserNotFoundException, UnSupportedActionException;
+}

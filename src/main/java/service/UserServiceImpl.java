@@ -19,7 +19,7 @@ import static java.lang.String.format;
 
 public class UserServiceImpl implements UserService{
     @Getter
-    private final Database<User> userDatabase;
+    private final UserDatabaseImpl<User> userDatabase;
     private static UserServiceImpl instance = null;
     private final MessageService messageService;
 
@@ -54,11 +54,6 @@ public class UserServiceImpl implements UserService{
         User recipient = userDatabase.findById(recipientId).orElseThrow(()-> new FriendRequestException("Friend request recipient does not exist"));
         Request request = new Request(senderName, senderId, recipientId);
         sendFriendRequest(request, recipient);
-    }
-
-    @Override
-    public void sendChatRoomRequest(String groupId, String... memberIds) {
-
     }
 
     @Override

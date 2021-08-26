@@ -1,21 +1,22 @@
 package data.model;
 
-import data.repository.ChatRoomStorable;
+import data.repository.Storable;
 import lombok.Data;
 import service.Message;
 import web.exception.ChatRoomException;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Data
-public class ChatRoom implements Observable, ChatRoomStorable {
+public class ChatRoom implements Observable, Storable {
     private final Set<String> members;
     private final String groupId;
     private final Set<String> admins;
     private String groupName;
+
+    public ChatRoom(String adminId, String groupName){
+        this(adminId, groupName, (String) null);
+    }
 
     public ChatRoom(String adminId, String groupName, String... members) {
         this.members = new HashSet<>();
@@ -25,6 +26,7 @@ public class ChatRoom implements Observable, ChatRoomStorable {
         this.admins.add(adminId);
         this.groupName = groupName;
     }
+
 
     @Override
     public void subscribe(String... subscribersId) {
@@ -49,5 +51,20 @@ public class ChatRoom implements Observable, ChatRoomStorable {
     public  void removeAdmin(String id) throws ChatRoomException {
         if (admins.size() == 1) throw new ChatRoomException("Chat room must have at least one admin");
         admins.remove(id);
+    }
+
+    @Override
+    public String getId() {
+        return groupId;
+    }
+
+    @Override
+    public String getName() {
+        return groupName;
+    }
+
+    @Override
+    public String getEmail() {
+        return null;
     }
 }
